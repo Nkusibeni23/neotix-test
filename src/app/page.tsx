@@ -22,6 +22,8 @@ const sample: DatasetRequest[] = statuses.map((status, i) => ({
   notes: null,
   status,
   created_at: "2026-09-30T10:00:00Z",
+  updated_at: "2026-09-30T10:00:00Z",
+  allowed_transitions: [],
 }));
 
 const col = columnHelper<DatasetRequest>();
@@ -43,9 +45,7 @@ export default function Home() {
       <PageHeader
         title="Dataset Request Desk"
         description="Component preview"
-        actions={
-<Button>New request</Button>
-        }
+        actions={<Button>New request</Button>}
       />
       <div className="flex flex-wrap gap-2">
         {statuses.map((s) => (
