@@ -18,6 +18,15 @@ const QUALITY: Record<Quality, string> = {
   bad: "bg-quality-bad/15 text-quality-bad",
 };
 
+// Full class names (not built from strings) so Tailwind can find them.
+export const STATUS_DOT: Record<RequestStatus, string> = {
+  submitted: "bg-status-submitted",
+  in_progress: "bg-status-in-progress",
+  delivered: "bg-status-delivered",
+  accepted: "bg-status-accepted",
+  rejected: "bg-status-rejected",
+};
+
 export const STATUS_LABELS = Object.fromEntries(
   Object.entries(STATUS).map(([key, value]) => [key, value.label]),
 ) as Record<RequestStatus, string>;
