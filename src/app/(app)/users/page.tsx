@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useConfirm } from "@/components/confirm-dialog";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
@@ -60,6 +61,12 @@ function RoleSelect({
     </Select>
   );
 }
+
+const ROLE_ACCESS: Record<Role, string> = {
+  client: "Clients only see and act on their own requests.",
+  operator: "Operators see every request, move them through the workflow, assign and import episodes.",
+  admin: "Admins can do everything an operator can, plus manage users and roles.",
+};
 
 const schema = z.object({
   name: z.string().trim().min(1, "Enter a name"),
@@ -153,18 +160,50 @@ const col = columnHelper<User>();
 export default function UsersPage() {
   const { data: me } = useMe();
   const users = useUsers();
-  const { mutate } = useUpdateUser();
+  const { mutateAsync } = useUpdateUser();
+  const confirm = useConfirm();
 
-  const change = useCallback(
+  // Both changes affect what someone can access immediately, so each asks first.
+  const update = useCallback(
     (u: User, body: { role?: Role; is_active?: boolean }, done: string) =>
-      mutate(
-        { id: u.id, ...body },
-        {
-          onSuccess: () => notify.success(done),
-          onError: (e) => notify.error(e, "Could not update user"),
+      mutateAsync({ id: u.id, ...body }).then(
+        () => notify.success(done),
+        (e) => {
+          notify.error(e, "Could not update user");
+          throw e;
         },
       ),
-    [mutate],
+    [mutateAsync],
+  );
+
+  const changeRole = useCallback(
+    (u: User, role: Role) =>
+      confirm({
+        title: `Make ${u.name} ${role === "admin" ? "an" : "a"} ${role}?`,
+        description: ROLE_ACCESS[role],
+        confirmLabel: "Change role",
+        onConfirm: () => update(u, { role }, `${u.name} is now ${role === "admin" ? "an" : "a"} ${role}`),
+      }),
+    [confirm, update],
+  );
+
+  const toggleActive = useCallback(
+    (u: User) =>
+      u.is_active
+        ? confirm({
+            title: `Deactivate ${u.name}?`,
+            description: "They are signed out right away and can't sign in until reactivated. Their requests are kept.",
+            confirmLabel: "Deactivate",
+            tone: "destructive",
+            onConfirm: () => update(u, { is_active: false }, `${u.name} deactivated`),
+          })
+        : confirm({
+            title: `Reactivate ${u.name}?`,
+            description: "They can sign in again with their existing password.",
+            confirmLabel: "Reactivate",
+            onConfirm: () => update(u, { is_active: true }, `${u.name} reactivated`),
+          }),
+    [confirm, update],
   );
 
   const columns = useMemo(
@@ -192,7 +231,7 @@ export default function UsersPage() {
             <RoleSelect
               value={row.original.role}
               disabled={row.original.id === me?.id}
-              onChange={(role) => change(row.original, { role }, `${row.original.name} is now ${role}`)}
+              onChange={(role) => changeRole(row.original, role)}
             />
           ),
         }),
@@ -213,20 +252,14 @@ export default function UsersPage() {
               <Button
                 variant={row.original.is_active ? "outline" : "secondary"}
                 size="sm"
-                onClick={() =>
-                  change(
-                    row.original,
-                    { is_active: !row.original.is_active },
-                    `${row.original.name} ${row.original.is_active ? "deactivated" : "reactivated"}`,
-                  )
-                }
+                onClick={() => toggleActive(row.original)}
               >
                 {row.original.is_active ? "Deactivate" : "Reactivate"}
               </Button>
             ),
         }),
       ]),
-    [me?.id, change],
+    [me?.id, changeRole, toggleActive],
   );
 
   return (
@@ -255,15 +288,13 @@ export default function UsersPage() {
               <RoleSelect
                 value={u.role}
                 disabled={u.id === me?.id}
-                onChange={(role) => change(u, { role }, `${u.name} is now ${role}`)}
+                onChange={(role) => changeRole(u, role)}
               />
               {u.id !== me?.id && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    change(u, { is_active: !u.is_active }, `${u.name} ${u.is_active ? "deactivated" : "reactivated"}`)
-                  }
+                  onClick={() => toggleActive(u)}
                 >
                   {u.is_active ? "Deactivate" : "Reactivate"}
                 </Button>

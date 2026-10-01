@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowLeftIcon, FilmIcon, Loader2Icon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, FilmIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
+import { useConfirm } from "@/components/confirm-dialog";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { EpisodePicker } from "@/components/episode-picker";
@@ -38,10 +39,30 @@ export default function RequestDetailPage() {
   const { data: user } = useMe();
   const request = useRequest(id);
   const episodes = useRequestEpisodes(id);
-  const unassign = useUnassign(id);
+  const { mutateAsync: unassign } = useUnassign(id);
+  const confirm = useConfirm();
 
   const req = request.data;
   const canEdit = isStaff(user?.role) && req?.status === "in_progress";
+
+  const removeEpisode = useCallback(
+    (e: Episode) =>
+      confirm({
+        title: `Remove ${e.episode_id}?`,
+        description: "It goes back to the pool and can be assigned to any request.",
+        confirmLabel: "Remove episode",
+        tone: "destructive",
+        onConfirm: () =>
+          unassign(e.id).then(
+            () => notify.success(`${e.episode_id} removed`),
+            (err) => {
+              notify.error(err, "Could not remove episode");
+              throw err;
+            },
+          ),
+      }),
+    [confirm, unassign],
+  );
 
   const columns = useMemo(
     () =>
@@ -67,26 +88,16 @@ export default function RequestDetailPage() {
                     variant="ghost"
                     size="icon-sm"
                     aria-label={`Remove ${row.original.episode_id}`}
-                    disabled={unassign.isPending}
-                    onClick={() =>
-                      unassign.mutate(row.original.id, {
-                        onSuccess: () => notify.success(`${row.original.episode_id} removed`),
-                        onError: (e) => notify.error(e, "Could not remove episode"),
-                      })
-                    }
+                    onClick={() => removeEpisode(row.original)}
                   >
-                    {unassign.isPending && unassign.variables === row.original.id ? (
-                      <Loader2Icon className="animate-spin" />
-                    ) : (
-                      <Trash2Icon />
-                    )}
+                    <Trash2Icon />
                   </Button>
                 ),
               }),
             ]
           : []),
       ]),
-    [canEdit, unassign],
+    [canEdit, removeEpisode],
   );
 
   if (request.error) {
@@ -212,7 +223,19 @@ export default function RequestDetailPage() {
                         {e.robot_id} · {formatDuration(e.duration_seconds)}
                       </p>
                     </div>
-                    <QualityBadge quality={e.quality} />
+                    <div className="flex items-center gap-1">
+                      <QualityBadge quality={e.quality} />
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Remove ${e.episode_id}`}
+                          onClick={() => removeEpisode(e)}
+                        >
+                          <Trash2Icon />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               />
