@@ -3,6 +3,7 @@
 import { BarChart3Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { DateRangePicker, toISODate } from "@/components/date-picker";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorAlert } from "@/components/error-alert";
 import { FilterBar, FilterField, SegmentedTabs } from "@/components/filters";
@@ -10,14 +11,13 @@ import { PageHeader } from "@/components/page-header";
 import { STATUS_DOT, STATUS_LABELS } from "@/components/status-badge";
 import { StatCard } from "@/components/stat-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
 import { useAnalytics } from "@/lib/queries";
 import type { RequestStatus } from "@/lib/types";
 
-const iso = (d: Date) => d.toISOString().slice(0, 10);
+const iso = toISODate;
 const daysAgo = (n: number) => iso(new Date(Date.now() - n * 86_400_000));
 
 type Preset = "7" | "30" | "90" | "custom";
@@ -66,24 +66,9 @@ export default function AnalyticsPage() {
           />
         </FilterField>
         {preset === "custom" && (
-          <>
-            <FilterField label="From">
-              <Input
-                type="date"
-                value={custom.start}
-                max={custom.end}
-                onChange={(e) => setCustom((c) => ({ ...c, start: e.target.value }))}
-              />
-            </FilterField>
-            <FilterField label="To">
-              <Input
-                type="date"
-                value={custom.end}
-                min={custom.start}
-                onChange={(e) => setCustom((c) => ({ ...c, end: e.target.value }))}
-              />
-            </FilterField>
-          </>
+          <FilterField label="Dates">
+            <DateRangePicker value={custom} onChange={setCustom} max={iso(new Date())} />
+          </FilterField>
         )}
       </FilterBar>
 
