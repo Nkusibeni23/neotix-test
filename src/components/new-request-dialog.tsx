@@ -1,0 +1,154 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon, PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { notify } from "@/lib/notify";
+import { useCreateRequest } from "@/lib/queries";
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+const schema = z.object({
+  task_name: z.string().trim().min(1, "What should the robot be doing?").max(255),
+  episodes_requested: z.coerce
+    .number<string>()
+    .int("Whole episodes only")
+    .min(1, "At least 1 episode")
+    .max(100_000),
+  deadline: z.string().min(1, "Pick a deadline").refine((d) => d >= today(), "Deadline is in the past"),
+  notes: z.string().max(5000).optional(),
+});
+type Values = z.input<typeof schema>;
+type Parsed = z.output<typeof schema>;
+
+function Field({
+  id,
+  label,
+  error,
+  hint,
+  children,
+}: {
+  id: string;
+  label: string;
+  error?: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+      {error ? (
+        <p className="text-xs text-destructive">{error}</p>
+      ) : (
+        hint && <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
+    </div>
+  );
+}
+
+export function NewRequestDialog() {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const create = useCreateRequest();
+  const form = useForm<Values, unknown, Parsed>({
+    resolver: zodResolver(schema),
+    defaultValues: { task_name: "", episodes_requested: "", deadline: "", notes: "" },
+  });
+  const { errors } = form.formState;
+
+  const submit = form.handleSubmit((values) =>
+    create.mutate(
+      { ...values, notes: values.notes || undefined },
+      {
+        onSuccess: (req) => {
+          notify.success("Request submitted", `${req.episodes_requested} × ${req.task_name}`);
+          setOpen(false);
+          form.reset();
+          router.push(`/requests/${req.id}`);
+        },
+        onError: (e) => notify.error(e, "Could not submit request"),
+      },
+    ),
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <Button>
+            <PlusIcon />
+            New request
+          </Button>
+        }
+      />
+      <DialogContent className="gap-6 p-6 sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-lg">New dataset request</DialogTitle>
+          <DialogDescription>Tell us what data you need and by when.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4" noValidate>
+          <Field id="task_name" label="Task" error={errors.task_name?.message} hint="e.g. pick cup, fold towel">
+            <Input id="task_name" aria-invalid={!!errors.task_name} {...form.register("task_name")} />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id="episodes_requested" label="Episodes" error={errors.episodes_requested?.message}>
+              <Input
+                id="episodes_requested"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                placeholder="200"
+                aria-invalid={!!errors.episodes_requested}
+                {...form.register("episodes_requested")}
+              />
+            </Field>
+            <Field id="deadline" label="Deadline" error={errors.deadline?.message}>
+              <Input
+                id="deadline"
+                type="date"
+                min={today()}
+                aria-invalid={!!errors.deadline}
+                {...form.register("deadline")}
+              />
+            </Field>
+          </div>
+          <Field id="notes" label="Notes (optional)" error={errors.notes?.message}>
+            <Textarea
+              id="notes"
+              rows={3}
+              placeholder="Lighting, objects, robot type…"
+              {...form.register("notes")}
+            />
+          </Field>
+          <DialogFooter className="gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={create.isPending}>
+              {create.isPending && <Loader2Icon className="animate-spin" />}
+              Submit request
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
