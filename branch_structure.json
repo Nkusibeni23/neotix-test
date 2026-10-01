@@ -1,0 +1,33 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat_add_UI_components_for_button",
+    "feat_integrate_date-fns",
+    "feat_user",
+    "feat_user_management_API",
+    "fix_README",
+    "fix_adjust",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "feat_add_UI_components_for_button": "main",
+    "feat_integrate_date-fns": "main",
+    "feat_user": "main",
+    "feat_user_management_API": "main",
+    "fix_README": "main",
+    "fix_adjust": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "feat_add_UI_components_for_button",
+    "feat_integrate_date-fns",
+    "feat_user",
+    "feat_user_management_API",
+    "fix_README",
+    "fix_adjust",
+    "origin"
+  ]
+}
