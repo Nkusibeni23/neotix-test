@@ -35,7 +35,7 @@ export interface Episode {
 export interface StatusEvent {
   from_status: RequestStatus | null;
   to_status: RequestStatus;
-  changed_by: Pick<User, "id" | "name">;
+  changed_by: Pick<User, "id" | "name" | "organisation">;
   changed_at: string;
 }
 
@@ -49,10 +49,41 @@ export interface DatasetRequest {
   notes: string | null;
   status: RequestStatus;
   created_at: string;
-  history?: StatusEvent[];
+  updated_at: string;
+  /** Statuses the current user may move this request to (computed by the API). */
+  allowed_transitions: RequestStatus[];
+}
+
+export interface DatasetRequestDetail extends DatasetRequest {
+  history: StatusEvent[];
 }
 
 export interface Page<T> {
   items: T[];
   total: number;
+}
+
+export interface ImportReport {
+  total_rows: number;
+  imported: number;
+  already_present: number;
+  skipped_count: number;
+  skipped: { line: number; episode_id: string | null; reason: string }[];
+}
+
+export interface Analytics {
+  start: string;
+  end: string;
+  episodes_per_day: { day: string; robot_id: string; episodes: number }[];
+  fulfilment: {
+    by_status: Record<RequestStatus, number>;
+    median_hours_to_delivery: number | null;
+  };
+  top_tasks: { task_name: string; good_episodes: number }[];
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: "bearer";
+  user: User;
 }

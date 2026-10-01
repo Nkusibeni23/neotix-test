@@ -19,7 +19,8 @@ export const tokenStore = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 };
 
-type Query = Record<string, string | number | boolean | undefined | null>;
+type QueryValue = string | number | boolean | undefined | null;
+type Query = Record<string, QueryValue | QueryValue[]>;
 
 export async function api<T>(
   path: string,
@@ -29,7 +30,10 @@ export async function api<T>(
 
   const url = new URL(path, API_URL);
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, String(value));
+    // Arrays become repeated params (?quality=good&quality=usable), which FastAPI reads as a list.
+    for (const v of Array.isArray(value) ? value : [value]) {
+      if (v !== undefined && v !== null && v !== "") url.searchParams.append(key, String(v));
+    }
   }
 
   const token = tokenStore.get();
