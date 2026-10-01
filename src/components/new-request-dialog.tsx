@@ -4,9 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { DatePicker, toISODate } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,7 +24,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { notify } from "@/lib/notify";
 import { useCreateRequest } from "@/lib/queries";
 
-const today = () => new Date().toISOString().slice(0, 10);
+// Local date, so "today" matches the calendar the user sees.
+const today = () => toISODate(new Date());
 
 const schema = z.object({
   task_name: z.string().trim().min(1, "What should the robot be doing?").max(255),
@@ -121,12 +123,18 @@ export function NewRequestDialog() {
               />
             </Field>
             <Field id="deadline" label="Deadline" error={errors.deadline?.message}>
-              <Input
-                id="deadline"
-                type="date"
-                min={today()}
-                aria-invalid={!!errors.deadline}
-                {...form.register("deadline")}
+              <Controller
+                control={form.control}
+                name="deadline"
+                render={({ field }) => (
+                  <DatePicker
+                    id="deadline"
+                    value={field.value || undefined}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    min={today()}
+                    invalid={!!errors.deadline}
+                  />
+                )}
               />
             </Field>
           </div>
