@@ -118,15 +118,21 @@ function NewUserDialog() {
         <form onSubmit={submit} className="space-y-4" noValidate>
           {(
             [
-              ["name", "Name", "text"],
-              ["email", "Email", "email"],
-              ["password", "Password", "password"],
-              ["organisation", "Organisation (clients)", "text"],
+              ["name", "Name", "text", "e.g. Jane Mukamana"],
+              ["email", "Email", "email", "name@company.com"],
+              ["password", "Password", "password", "At least 8 characters"],
+              ["organisation", "Organisation (clients)", "text", "e.g. Acme Robotics"],
             ] as const
-          ).map(([name, label, type]) => (
+          ).map(([name, label, type, placeholder]) => (
             <div key={name} className="space-y-2">
               <Label htmlFor={name}>{label}</Label>
-              <Input id={name} type={type} aria-invalid={!!errors[name]} {...form.register(name)} />
+              <Input
+                id={name}
+                type={type}
+                placeholder={placeholder}
+                aria-invalid={!!errors[name]}
+                {...form.register(name)}
+              />
               {errors[name] && <p className="text-xs text-destructive">{errors[name]?.message}</p>}
             </div>
           ))}
