@@ -55,9 +55,12 @@ export function EpisodePicker({ request }: { request: DatasetRequest }) {
   const episodes = useEpisodes(filters, !tasks.isLoading);
   const assign = useAssign(request.id);
 
+  // A filter change starts again from page 1 and drops the selection, so nothing hidden by
+  // the new filters can be assigned by surprise. Paging keeps the selection.
   const resetPage = <T,>(set: (v: T) => void) => (v: T) => {
     set(v);
     setPage(0);
+    setSelection({});
   };
   const isFiltered =
     effectiveTask !== defaults.task ||
@@ -70,6 +73,7 @@ export function EpisodePicker({ request }: { request: DatasetRequest }) {
     setRobot(undefined);
     setUnassigned(true);
     setPage(0);
+    setSelection({});
   };
 
   const selectedIds = Object.keys(selection).filter((k) => selection[k]).map(Number);

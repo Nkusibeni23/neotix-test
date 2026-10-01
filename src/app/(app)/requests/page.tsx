@@ -72,9 +72,16 @@ export default function RequestsPage() {
       col.columns([
         col.accessor("task_name", {
           header: "Task",
+          // A real link (not only a clickable row) so keyboard and screen-reader users can open it.
           cell: ({ row }) => (
             <div className="flex flex-col">
-              <span className="font-medium capitalize">{row.original.task_name}</span>
+              <Link
+                href={`/requests/${row.original.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="w-fit rounded-sm font-medium capitalize outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {row.original.task_name}
+              </Link>
               <span className="text-xs text-muted-foreground">#{row.original.id}</span>
             </div>
           ),

@@ -2,6 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -11,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useLogin } from "@/lib/auth";
+import { useLogin, useMe } from "@/lib/auth";
 
 const schema = z.object({
   email: z.string().trim().min(1, "Enter your email").email("Enter a valid email"),
@@ -28,7 +30,15 @@ const DEMO_ACCOUNTS = [
 ];
 
 export default function LoginPage() {
+  const router = useRouter();
+  const me = useMe();
   const login = useLogin();
+
+  // Already signed in (valid token): go straight to the app.
+  useEffect(() => {
+    if (me.data) router.replace("/requests");
+  }, [me.data, router]);
+
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" } });
   const { errors } = form.formState;
 
@@ -67,6 +77,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   autoComplete="current-password"
+                  placeholder="Enter your password"
                   aria-invalid={!!errors.password}
                   {...form.register("password")}
                 />
