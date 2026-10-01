@@ -1,4 +1,4 @@
-# Dataset Request Desk — Web
+# Dataset Request Desk Web
 
 The web app for the Dataset Request Desk: clients request robot-episode datasets, operators fulfil
 them, clients accept or reject the delivery.
