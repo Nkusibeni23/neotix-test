@@ -27,6 +27,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHasToken, useIsClient, useLogout, useMe } from "@/lib/auth";
+import { useLiveUpdates, type LiveState } from "@/lib/live";
 import type { Role, User } from "@/lib/types";
 
 interface NavItem {
@@ -111,6 +112,26 @@ function UserMenu({ user }: { user: User }) {
   );
 }
 
+const LIVE: Record<LiveState, { label: string; dot: string; hint: string }> = {
+  live: { label: "Live", dot: "bg-status-accepted", hint: "Updates appear automatically" },
+  connecting: { label: "Connecting", dot: "bg-status-in-progress animate-pulse", hint: "Connecting to live updates" },
+  offline: { label: "Offline", dot: "bg-muted-foreground", hint: "Live updates paused; retrying" },
+};
+
+function LiveIndicator({ state }: { state: LiveState }) {
+  const { label, dot, hint } = LIVE[state];
+  return (
+    <span
+      title={hint}
+      aria-live="polite"
+      className="hidden items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground sm:inline-flex"
+    >
+      <span className={cn("size-2 rounded-full", dot)} />
+      {label}
+    </span>
+  );
+}
+
 function ShellSkeleton() {
   return (
     <div className="flex flex-1 flex-col">
@@ -130,6 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const hasToken = useHasToken();
   const me = useMe();
   const [menuOpen, setMenuOpen] = useState(false);
+  const live = useLiveUpdates(me.data);
 
   const signedOut = isClient && (!hasToken || me.isError);
   useEffect(() => {
@@ -169,7 +191,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="hidden items-center gap-1 md:flex">
             <NavLinks user={user} />
           </nav>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            <LiveIndicator state={live} />
             <UserMenu user={user} />
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSyncExternalStore } from "react";
 
 import { api, tokenStore } from "@/lib/api";
+import { notify } from "@/lib/notify";
 import { keys } from "@/lib/queries";
 import type { LoginResponse, Role, User } from "@/lib/types";
 
@@ -44,6 +45,7 @@ export function useLogin() {
     onSuccess: ({ access_token, user }) => {
       tokenStore.set(access_token);
       qc.setQueryData(keys.me, user);
+      notify.success(`Welcome back, ${user.name.split(" ")[0]}`);
       router.replace("/requests");
     },
   });
