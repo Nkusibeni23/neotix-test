@@ -94,7 +94,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="space-y-2.5">
-          <p className="text-center text-xs text-muted-foreground">Demo accounts — click to fill</p>
+          <p className="text-center text-xs text-muted-foreground">Demo accounts click to fill</p>
           <div className="grid grid-cols-2 gap-2">
             {DEMO_ACCOUNTS.map((a) => (
               <Button
