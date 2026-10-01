@@ -3,7 +3,7 @@
 Next.js frontend for the Dataset Request Desk.
 
 The API, database, seed users, tests and the `docker-compose.yml` that runs the whole system live in
-**[dataset-request-desk-api](https://github.com/Nkusibeni23/dataset-request-desk-api)**. Start there:
+**[neotix-api](https://github.com/Nkusibeni23/neotix-api)**. Start there:
 its README covers one-command startup and the seed login credentials.
 
 ## Stack
