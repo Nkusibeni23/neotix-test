@@ -11,6 +11,8 @@ import {
   type RowSelectionState,
 } from "@tanstack/react-table";
 
+import { cn } from "cn";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -45,6 +47,8 @@ interface DataTableProps<TData extends RowData> {
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   canSelectRow?: (row: TData) => boolean;
+  /** Below the md breakpoint, render each row as a card instead of a table row. */
+  renderCard?: (row: TData) => React.ReactNode;
 }
 
 export function DataTable<TData extends RowData>({
@@ -57,6 +61,7 @@ export function DataTable<TData extends RowData>({
   rowSelection,
   onRowSelectionChange,
   canSelectRow,
+  renderCard,
 }: DataTableProps<TData>) {
   const selectable = Boolean(rowSelection && onRowSelectionChange);
   const table = useTable({
@@ -75,14 +80,38 @@ export function DataTable<TData extends RowData>({
 
   const rows = table.getRowModel().rows;
 
+  const cards = renderCard && (
+    <div className="space-y-2 md:hidden">
+      {isLoading ? (
+        Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
+      ) : rows.length === 0 ? (
+        <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
+          {emptyMessage}
+        </div>
+      ) : (
+        rows.map((row) => (
+          <div
+            key={row.id}
+            data-state={row.getIsSelected() ? "selected" : undefined}
+            className="rounded-xl border bg-card p-4 transition-colors data-[state=selected]:border-primary/50 data-[state=selected]:bg-primary/5"
+          >
+            {renderCard(row.original)}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
-    <div className="min-w-0 rounded-xl border bg-card">
+    <>
+    {cards}
+    <div className={cn("min-w-0 overflow-hidden rounded-xl border bg-card", renderCard && "hidden md:block")}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((group) => (
             <TableRow key={group.id}>
               {group.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className="h-11 bg-muted/40 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                   {header.isPlaceholder ? null : <table.FlexRender header={header} />}
                 </TableHead>
               ))}
@@ -111,7 +140,7 @@ export function DataTable<TData extends RowData>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
-                className={onRowClick ? "cursor-pointer" : undefined}
+                className={cn("h-14", onRowClick && "cursor-pointer")}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
               >
                 {row.getAllCells().map((cell) => (
@@ -125,5 +154,6 @@ export function DataTable<TData extends RowData>({
         </TableBody>
       </Table>
     </div>
+    </>
   );
 }

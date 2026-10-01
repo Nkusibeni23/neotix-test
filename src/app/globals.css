@@ -112,4 +112,16 @@
   html {
     @apply font-sans;
   }
+  /* Tailwind 4 resets buttons to the default cursor; restore the hand on everything clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="option"],
+  [role="menuitem"],
+  [role="checkbox"],
+  [role="switch"],
+  label:has(input:not(:disabled)),
+  summary {
+    cursor: pointer;
+  }
 }
