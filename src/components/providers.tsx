@@ -4,6 +4,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@ta
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 
+import { ConfirmProvider } from "@/components/confirm-dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { ApiError, tokenStore } from "@/lib/api";
 
@@ -36,7 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <ConfirmProvider>{children}</ConfirmProvider>
       <Toaster position="top-right" closeButton duration={4000} visibleToasts={3} />
       <ReactQueryDevtools buttonPosition="bottom-left" />
     </QueryClientProvider>
