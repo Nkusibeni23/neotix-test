@@ -1,10 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon, PlusIcon } from "lucide-react";
+import { CheckIcon, Loader2Icon, PlusIcon } from "lucide-react";
+import { cn } from "cn";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { DatePicker, toISODate } from "@/components/date-picker";
@@ -22,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { notify } from "@/lib/notify";
-import { useCreateRequest } from "@/lib/queries";
+import { useCreateRequest, useTasks } from "@/lib/queries";
 
 // Local date, so "today" matches the calendar the user sees.
 const today = () => toISODate(new Date());
@@ -66,15 +67,54 @@ function Field({
   );
 }
 
+/** Tasks we already record, as one-click chips, so the request matches real episode data. */
+function TaskSuggestions({
+  tasks,
+  value,
+  onPick,
+}: {
+  tasks: string[];
+  value: string;
+  onPick: (task: string) => void;
+}) {
+  const current = value.trim().toLowerCase().replace(/\s+/g, " ");
+  return (
+    <div className="flex flex-wrap gap-1.5 pt-0.5">
+      {tasks.map((t) => {
+        const on = t === current;
+        return (
+          <button
+            key={t}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onPick(t)}
+            className={cn(
+              "inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs font-medium capitalize transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              on
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {on && <CheckIcon className="size-3" />}
+            {t}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function NewRequestDialog() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const create = useCreateRequest();
+  const tasks = useTasks();
   const form = useForm<Values, unknown, Parsed>({
     resolver: zodResolver(schema),
     defaultValues: { task_name: "", episodes_requested: "", deadline: "", notes: "" },
   });
   const { errors } = form.formState;
+  const taskValue = useWatch({ control: form.control, name: "task_name" });
 
   const submit = form.handleSubmit((values) =>
     create.mutate(
@@ -107,8 +147,25 @@ export function NewRequestDialog() {
           <DialogDescription>Tell us what data you need and by when.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4" noValidate>
-          <Field id="task_name" label="Task" error={errors.task_name?.message} hint="e.g. pick cup, fold towel">
-            <Input id="task_name" aria-invalid={!!errors.task_name} {...form.register("task_name")} />
+          <Field
+            id="task_name"
+            label="Task"
+            error={errors.task_name?.message}
+            hint="Pick a task we already record, or type a new one."
+          >
+            <Input
+              id="task_name"
+              placeholder="e.g. pick cup"
+              aria-invalid={!!errors.task_name}
+              {...form.register("task_name")}
+            />
+            {tasks.data && tasks.data.length > 0 && (
+              <TaskSuggestions
+                tasks={tasks.data}
+                value={taskValue}
+                onPick={(t) => form.setValue("task_name", t, { shouldValidate: true })}
+              />
+            )}
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="episodes_requested" label="Episodes" error={errors.episodes_requested?.message}>
@@ -117,7 +174,7 @@ export function NewRequestDialog() {
                 type="number"
                 inputMode="numeric"
                 min={1}
-                placeholder="200"
+                placeholder="e.g. 200"
                 aria-invalid={!!errors.episodes_requested}
                 {...form.register("episodes_requested")}
               />
@@ -132,6 +189,7 @@ export function NewRequestDialog() {
                     value={field.value || undefined}
                     onChange={(v) => field.onChange(v ?? "")}
                     min={today()}
+                    placeholder="Select a deadline"
                     invalid={!!errors.deadline}
                   />
                 )}
