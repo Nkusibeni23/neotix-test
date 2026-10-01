@@ -183,6 +183,7 @@ export function EpisodePicker({ request }: { request: DatasetRequest }) {
         data={episodes.data?.items}
         isLoading={episodes.isLoading || tasks.isLoading}
         getRowId={(e) => String(e.id)}
+        rowNumberOffset={page * PAGE_SIZE}
         rowSelection={selection}
         onRowSelectionChange={setSelection}
         canSelectRow={assignable}

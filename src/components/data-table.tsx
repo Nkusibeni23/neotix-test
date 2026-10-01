@@ -33,6 +33,8 @@ export type DataTableColumn<TData extends RowData> = ColumnDef<Features, TData>;
 /** Typed column helper for DataTable: `const col = columnHelper<Episode>()`. */
 export const columnHelper = <TData extends RowData>() => createColumnHelper<Features, TData>();
 
+const HEAD = "h-11 bg-muted/40 text-xs font-medium tracking-wide text-muted-foreground uppercase";
+
 // Stable empty array so a loading table does not get new data on every render.
 const EMPTY: never[] = [];
 
@@ -49,6 +51,9 @@ interface DataTableProps<TData extends RowData> {
   canSelectRow?: (row: TData) => boolean;
   /** Below the md breakpoint, render each row as a card instead of a table row. */
   renderCard?: (row: TData) => React.ReactNode;
+  /** Show a "No." column. On paged tables pass the page offset so numbering continues. */
+  numbered?: boolean;
+  rowNumberOffset?: number;
 }
 
 export function DataTable<TData extends RowData>({
@@ -62,6 +67,8 @@ export function DataTable<TData extends RowData>({
   onRowSelectionChange,
   canSelectRow,
   renderCard,
+  numbered = true,
+  rowNumberOffset = 0,
 }: DataTableProps<TData>) {
   const selectable = Boolean(rowSelection && onRowSelectionChange);
   const table = useTable({
@@ -79,6 +86,7 @@ export function DataTable<TData extends RowData>({
   });
 
   const rows = table.getRowModel().rows;
+  const colSpan = columns.length + (numbered ? 1 : 0);
 
   const cards = renderCard && (
     <div className="space-y-2 md:hidden">
@@ -110,8 +118,11 @@ export function DataTable<TData extends RowData>({
         <TableHeader>
           {table.getHeaderGroups().map((group) => (
             <TableRow key={group.id}>
+              {numbered && (
+                <TableHead className={cn(HEAD, "w-14 text-right")}>No.</TableHead>
+              )}
               {group.headers.map((header) => (
-                <TableHead key={header.id} className="h-11 bg-muted/40 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <TableHead key={header.id} className={HEAD}>
                   {header.isPlaceholder ? null : <table.FlexRender header={header} />}
                 </TableHead>
               ))}
@@ -122,7 +133,7 @@ export function DataTable<TData extends RowData>({
           {isLoading ? (
             Array.from({ length: 5 }, (_, i) => (
               <TableRow key={i}>
-                {columns.map((_, j) => (
+                {Array.from({ length: colSpan }, (_, j) => (
                   <TableCell key={j}>
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
@@ -131,18 +142,23 @@ export function DataTable<TData extends RowData>({
             ))
           ) : rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={colSpan} className="h-24 text-center text-muted-foreground">
                 {emptyMessage}
               </TableCell>
             </TableRow>
           ) : (
-            rows.map((row) => (
+            rows.map((row, index) => (
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
                 className={cn("h-14", onRowClick && "cursor-pointer")}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
               >
+                {numbered && (
+                  <TableCell className="w-14 text-right text-xs text-muted-foreground tabular-nums">
+                    {rowNumberOffset + index + 1}
+                  </TableCell>
+                )}
                 {row.getAllCells().map((cell) => (
                   <TableCell key={cell.id}>
                     <table.FlexRender cell={cell} />
