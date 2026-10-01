@@ -112,22 +112,17 @@ function UserMenu({ user }: { user: User }) {
   );
 }
 
-const LIVE: Record<LiveState, { label: string; dot: string; hint: string }> = {
-  live: { label: "Live", dot: "bg-status-accepted", hint: "Updates appear automatically" },
-  connecting: { label: "Connecting", dot: "bg-status-in-progress animate-pulse", hint: "Connecting to live updates" },
-  offline: { label: "Offline", dot: "bg-muted-foreground", hint: "Live updates paused; retrying" },
-};
-
-function LiveIndicator({ state }: { state: LiveState }) {
-  const { label, dot, hint } = LIVE[state];
+/** Silent while live updates work; only speaks up when they've dropped and are retrying. */
+function ConnectionNotice({ state }: { state: LiveState }) {
+  if (state !== "offline") return null;
   return (
     <span
-      title={hint}
-      aria-live="polite"
-      className="hidden items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground sm:inline-flex"
+      role="status"
+      title="Live updates paused. Retrying automatically; the page still works."
+      className="inline-flex items-center gap-1.5 rounded-full border border-status-in-progress/30 bg-status-in-progress/10 px-2.5 py-1 text-xs font-medium text-status-in-progress"
     >
-      <span className={cn("size-2 rounded-full", dot)} />
-      {label}
+      <span className="size-2 animate-pulse rounded-full bg-status-in-progress" />
+      Reconnecting…
     </span>
   );
 }
@@ -192,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <NavLinks user={user} />
           </nav>
           <div className="ml-auto flex items-center gap-3">
-            <LiveIndicator state={live} />
+            <ConnectionNotice state={live} />
             <UserMenu user={user} />
           </div>
         </div>

@@ -30,7 +30,7 @@ it never relies on that: every rule is enforced by the API.
 - **Keyboard friendly:** request rows are real links; the dialogs, menus and date picker are fully keyboard-operable.
 - **Live updates:** new requests and status changes appear without refreshing (Server-Sent
   Events, `lib/live.ts`). Operators get a toast for each new request, clients when their request
-  changes; a **Live** dot in the top bar shows the connection state and it reconnects by itself.
+  changes. It reconnects by itself; a "Reconnecting…" notice appears only while it's down.
 - Demo-account buttons on the login page to switch roles in one click.
 
 ## Stack
