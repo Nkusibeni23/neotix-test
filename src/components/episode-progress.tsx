@@ -14,11 +14,12 @@ export function EpisodeProgress({
   const complete = assigned >= requested;
   return (
     <div className={cn("flex min-w-28 flex-col gap-1.5", className)}>
-      <div className="flex items-baseline justify-between gap-2 text-xs">
+      {/* Count and percentage sit together so the eye doesn't travel across the bar. */}
+      <div className="flex items-baseline gap-2 text-xs">
         <span className="font-medium tabular-nums">
           {assigned} <span className="text-muted-foreground">/ {requested}</span>
         </span>
-        <span className="text-muted-foreground tabular-nums">{pct}%</span>
+        <span className="text-muted-foreground tabular-nums">· {pct}%</span>
       </div>
       <div
         className="h-1.5 overflow-hidden rounded-full bg-muted"
