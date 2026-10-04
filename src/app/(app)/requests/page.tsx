@@ -102,7 +102,7 @@ export default function RequestsPage() {
             <EpisodeProgress
               assigned={row.original.episodes_assigned}
               requested={row.original.episodes_requested}
-              className="max-w-40"
+              className="w-32"
             />
           ),
         }),
